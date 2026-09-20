@@ -1,26 +1,29 @@
 import 'package:hive_ce/hive.dart';
 import 'package:hive_ce_flutter/adapters.dart';
+import 'game_state.dart';
 
 class ToDoDatabase {
-  List toDoList = [];
-  
-  // reference box
   final _mybox = Hive.box('mybox');
 
-  // run if first time ever opening app
-  void createInitialData() {
-    toDoList = [
-      ["Create task", false]
-    ];
-  }
+  GameState state = GameState.initial();
 
-  // load data from db
   void loadData() {
-    toDoList = _mybox.get("TODOLIST");
+    final savedState = _mybox.get('GAME_STATE');
+    if (savedState is Map) {
+      state = GameState.fromMap(savedState);
+      state.updatePetHealth();
+      return;
+    }
+
+    final oldTasks = _mybox.get('TODOLIST');
+    if (oldTasks is List) {
+      state.tasks = oldTasks
+          .map((task) => List<dynamic>.from(task as List))
+          .toList();
+    }
   }
 
-  // Update db
   void updateDatabase() {
-    _mybox.put("TODOLIST", toDoList);
+    _mybox.put('GAME_STATE', state.toMap());
   }
 }
